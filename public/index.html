@@ -357,6 +357,19 @@
 
             <button class="btn" id="analyzeBtn" disabled>Analyze Document</button>
 
+            <!-- Text-Only Analysis Section -->
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px dashed #e0e0e0;">
+                <h2 style="color: #1e3c72; margin-bottom: 15px;">📝 Or Paste Sensitive Text</h2>
+                <textarea id="textInput" style="width: 100%; min-height: 100px; padding: 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; resize: vertical;" placeholder="Paste prescription text, financial data, contract details..."></textarea>
+                <div style="margin: 10px 0;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="returnVoiceText">
+                        <span>Generate voice response (TTS)</span>
+                    </label>
+                </div>
+                <button class="btn" id="analyzeTextBtn" onclick="analyzeText()" disabled>Analyze Text</button>
+            </div>
+
             <div class="loading" id="loading">
                 <div class="spinner"></div>
                 <p>Processing with Venice AI... (zero retention mode)</p>
@@ -460,6 +473,52 @@
                 analyzeBtn.disabled = false;
             }
         });
+
+        // Text input enable/disable
+        const textInput = document.getElementById('textInput');
+        const analyzeTextBtn = document.getElementById('analyzeTextBtn');
+        textInput.addEventListener('input', () => {
+            analyzeTextBtn.disabled = !textInput.value.trim();
+        });
+
+        async function analyzeText() {
+            const text = textInput.value.trim();
+            if (!text) return;
+
+            const returnVoiceText = document.getElementById('returnVoiceText').checked;
+            analyzeTextBtn.disabled = true;
+            loading.classList.add('show');
+            results.classList.remove('show');
+
+            try {
+                const response = await fetch('/api/analyze-text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, returnVoice: returnVoiceText ? 'true' : 'false' })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('analysisContent').textContent = data.analysis;
+                    document.getElementById('summaryContent').textContent = 'Text analyzed with zero data retention.';
+                    if (data.audio) {
+                        const audioPlayer = document.getElementById('audioPlayer');
+                        audioPlayer.src = data.audio.data;
+                        document.getElementById('audioSection').style.display = 'block';
+                    } else {
+                        document.getElementById('audioSection').style.display = 'none';
+                    }
+                    results.classList.add('show');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            } finally {
+                loading.classList.remove('show');
+                analyzeTextBtn.disabled = false;
+            }
+        }
 
         function displayResults(data) {
             document.getElementById('analysisContent').textContent = data.analysis;
