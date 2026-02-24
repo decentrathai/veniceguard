@@ -16,10 +16,22 @@ const upload = multer({
 });
 
 // Initialize Venice AI client (OpenAI-compatible)
+// Detect if using OpenAI key as fallback and adjust baseURL
+const isOpenAIKey = process.env.VENICE_API_KEY && process.env.VENICE_API_KEY.startsWith('sk-');
 const venice = new OpenAI({
   apiKey: process.env.VENICE_API_KEY,
-  baseURL: 'https://api.venice.ai/api/v1'
+  baseURL: isOpenAIKey ? 'https://api.openai.com/v1' : 'https://api.venice.ai/api/v1'
 });
+
+console.log(`[CONFIG] Using ${isOpenAIKey ? 'OpenAI' : 'Venice AI'} API endpoint`);
+
+// Model mapping for OpenAI fallback
+const models = {
+  vision: isOpenAIKey ? 'gpt-4o' : 'qwen3-vl-235b-a22b',
+  chatReasoning: isOpenAIKey ? 'gpt-4o' : 'zai-org-glm-4.7',
+  chatUncensored: isOpenAIKey ? 'gpt-4o' : 'venice-uncensored',
+  tts: isOpenAIKey ? 'tts-1' : 'tts-1'
+};
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -52,7 +64,7 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
     // Step 1: Vision analysis using Venice AI vision model
     console.log('[STEP 2] Analyzing image with Venice vision model...');
     const visionResponse = await venice.chat.completions.create({
-      model: 'qwen3-vl-235b-a22b', // Venice vision model
+      model: models.vision, // Venice vision model or OpenAI fallback
       messages: [
         {
           role: 'user',
@@ -78,7 +90,7 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
     // Step 2: Generate a concise summary using chat model
     console.log('[STEP 4] Generating summary with Venice chat model...');
     const summaryResponse = await venice.chat.completions.create({
-      model: 'venice-uncensored', // Fast, uncensored model for summarization
+      model: models.chatUncensored, // Fast, uncensored model for summarization
       messages: [
         {
           role: 'system',
@@ -110,7 +122,7 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
       console.log('[STEP 6] Generating voice response with Venice TTS...');
       
       const speechResponse = await venice.audio.speech.create({
-        model: 'tts-1', // Venice TTS model
+        model: models.tts, // Venice TTS model or OpenAI fallback
         voice: 'alloy',
         input: summary
       });
@@ -156,7 +168,7 @@ app.post('/api/analyze-text', async (req, res) => {
 
     // Analyze text with Venice chat model
     const analysisResponse = await venice.chat.completions.create({
-      model: 'zai-org-glm-4.7', // Venice flagship reasoning model
+      model: models.chatReasoning, // Venice flagship reasoning model or OpenAI fallback
       messages: [
         {
           role: 'system',
@@ -186,7 +198,7 @@ app.post('/api/analyze-text', async (req, res) => {
       console.log('[STEP 3] Generating voice response...');
       
       const speechResponse = await venice.audio.speech.create({
-        model: 'tts-1',
+        model: models.tts,
         voice: 'nova',
         input: analysis
       });
@@ -229,10 +241,10 @@ app.get('/api/health', (req, res) => {
 app.get('/api/models', async (req, res) => {
   try {
     res.json({
-      vision: 'qwen3-vl-235b-a22b',
-      chat: ['zai-org-glm-4.7', 'venice-uncensored', 'qwen3-4b'],
-      audio: 'tts-1',
-      provider: 'Venice AI',
+      vision: models.vision,
+      chat: isOpenAIKey ? ['gpt-4o', 'gpt-4', 'gpt-3.5-turbo'] : ['zai-org-glm-4.7', 'venice-uncensored', 'qwen3-4b'],
+      audio: models.tts,
+      provider: isOpenAIKey ? 'OpenAI (fallback)' : 'Venice AI',
       privacy: 'zero-retention'
     });
   } catch (error) {
