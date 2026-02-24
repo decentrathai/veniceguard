@@ -4,12 +4,13 @@
 
 ### Basic Details
 - **Project Name:** VeniceGuard
-- **Tagline:** Privacy-preserving multimodal AI agent for sensitive documents
+- **Tagline:** AI that analyzes your most sensitive documents and forgets everything. Vision + reasoning + voice with zero data retention.
 - **Hackathon:** Open Agents Hackathon 2026
 - **Track:** Venice Track - Private Multimodal Intelligence
 - **Team:** Alex Tolmach (@decentrathai)
 - **GitHub:** https://github.com/decentrathai/veniceguard
-- **Built With:** Node.js, Express, Venice AI API, OpenAI SDK
+- **Built With:** Node.js, Express, Venice AI API (venice-uncensored, qwen3-vl, tts-kokoro), OpenAI SDK
+- **Demo Video:** https://youtu.be/g6EUWNPzvlM
 
 ### Submission Categories/Prizes Target
 - ✅ **Best Private Multimodal System** (1000 VVV) - PRIMARY TARGET
@@ -92,14 +93,14 @@ VeniceGuard is a privacy-first multimodal AI agent that combines vision, text, a
    - Base64-encoded images sent directly to API
    - Results returned, image buffer immediately discarded
 
-2. **Chat Completions API (`zai-org-glm-4.7`, `venice-uncensored`)**
+2. **Chat Completions API (`venice-uncensored`)**
    - Deep reasoning for sensitive document analysis
-   - Uncensored models for medical/legal terminology
+   - Uncensored model handles medical/legal terminology without content filters
    - Zero data retention on Venice's side
 
-3. **Audio/TTS API (`tts-1`)**
-   - Text-to-speech synthesis for accessibility
-   - 60+ voices, multilingual support
+3. **Audio/TTS API (`tts-kokoro` with `af_heart` voice)**
+   - High-quality text-to-speech synthesis for accessibility
+   - Natural-sounding voice output
    - Generated audio never stored
 
 **Privacy Architecture:**
