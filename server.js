@@ -30,7 +30,7 @@ const models = {
   vision: isOpenAIKey ? 'gpt-4o' : 'qwen3-vl-235b-a22b',
   chatReasoning: isOpenAIKey ? 'gpt-4o' : 'zai-org-glm-4.7',
   chatUncensored: isOpenAIKey ? 'gpt-4o' : 'venice-uncensored',
-  tts: isOpenAIKey ? 'tts-1' : 'tts-1'
+  tts: isOpenAIKey ? 'tts-1' : 'tts-kokoro'
 };
 
 app.use(express.json());
@@ -123,7 +123,7 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
       
       const speechResponse = await venice.audio.speech.create({
         model: models.tts, // Venice TTS model or OpenAI fallback
-        voice: 'alloy',
+        voice: isOpenAIKey ? 'alloy' : 'af_heart',
         input: summary
       });
 
@@ -157,7 +157,7 @@ app.post('/api/analyze', upload.single('file'), async (req, res) => {
  */
 app.post('/api/analyze-text', async (req, res) => {
   try {
-    const { text, returnVoice } = req.body;
+    const { text, prompt, returnVoice } = req.body;
 
     if (!text) {
       return res.status(400).json({ error: 'No text provided' });
@@ -168,7 +168,7 @@ app.post('/api/analyze-text', async (req, res) => {
 
     // Analyze text with Venice chat model
     const analysisResponse = await venice.chat.completions.create({
-      model: models.chatReasoning, // Venice flagship reasoning model or OpenAI fallback
+      model: models.chatUncensored, // Venice uncensored model (reliable)
       messages: [
         {
           role: 'system',
@@ -176,7 +176,7 @@ app.post('/api/analyze-text', async (req, res) => {
         },
         {
           role: 'user',
-          content: `Analyze this text and extract key insights:\n\n${text}`
+          content: prompt ? `${prompt}:\n\n${text}` : `Analyze this text and extract key insights:\n\n${text}`
         }
       ],
       max_tokens: 500
@@ -199,7 +199,7 @@ app.post('/api/analyze-text', async (req, res) => {
       
       const speechResponse = await venice.audio.speech.create({
         model: models.tts,
-        voice: 'nova',
+        voice: isOpenAIKey ? 'nova' : 'af_heart',
         input: analysis
       });
 
